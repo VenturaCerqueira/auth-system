@@ -1,12 +1,12 @@
 """
-Vercel Serverless API for Auth System
+Vercel Serverless API for Auth System - Full Version
 """
 
-from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional
 import os
 
 # Create FastAPI app
@@ -35,33 +35,19 @@ async def health():
         "master_admin_email": os.getenv("MASTER_ADMIN_EMAIL", "not set")
     }
 
-# Only continue if essential imports work
+# Try to import and configure everything
 try:
     from passlib.context import CryptContext
     from datetime import datetime, timedelta, UTC
     from jose import JWTError, jwt
-    import httpx
-    import pandas as pd
-    import io
     
     # JWT setup - with defaults
-    SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key-change-me")
+    SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key-change-me-in-production")
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
     
     pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto", default="pbkdf2_sha256")
     security = HTTPBearer()
-    
-    # Try to configure Gemini - won't crash if not configured
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    model = None
-    if GEMINI_API_KEY:
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-pro')
-        except Exception as e:
-            print(f"Warning: Could not configure Gemini: {e}")
     
     # Initialize databases
     class UserDatabase:
@@ -112,9 +98,41 @@ try:
             self.add_setor('2', {'id': '2', 'name': 'Setor Financeiro', 'code': 'FIN', 'departamento_id': '1'})
             self.add_setor('3', {'id': '3', 'name': 'Setor Operacional', 'code': 'OPE', 'departamento_id': '2'})
     
+    class DepartamentoDatabase:
+        _instance = None
+        departamentos = {}
+        
+        def __new__(cls):
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._initialize()
+            return cls._instance
+        
+        def _initialize(self):
+            self.departamentos = {}
+            self.add_departamento('1', {'id': '1', 'name': 'Departamento de RH', 'code': 'RH'})
+            self.add_departamento('2', {'id': '2', 'name': 'Departamento de TI', 'code': 'TI'})
+    
+    class FilialDatabase:
+        _instance = None
+        filiais = {}
+        
+        def __new__(cls):
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._initialize()
+            return cls._instance
+        
+        def _initialize(self):
+            self.filiais = {}
+            self.add_filial('1', {'id': '1', 'name': 'Filial São Paulo', 'code': 'SP'})
+            self.add_filial('2', {'id': '2', 'name': 'Filial Rio de Janeiro', 'code': 'RJ'})
+    
     users_db = UserDatabase()
     files_db = FileDatabase()
     setores_db = SetorDatabase()
+    departamentos_db = DepartamentoDatabase()
+    filiais_db = FilialDatabase()
     
     # Models
     class UserCreate(BaseModel):
@@ -122,6 +140,10 @@ try:
         password: str
         full_name: str
         role: Optional[str] = 'user'
+        matricula: Optional[str] = None
+        setor_id: Optional[str] = None
+        departamento_id: Optional[str] = None
+        filial_id: Optional[str] = None
     
     class UserLogin(BaseModel):
         email: EmailStr
@@ -136,6 +158,10 @@ try:
         full_name: str
         role: str
         disabled: bool = False
+        matricula: Optional[str] = None
+        setor_id: Optional[str] = None
+        departamento_id: Optional[str] = None
+        filial_id: Optional[str] = None
     
     def get_password_hash(password):
         return pwd_context.hash(password)
@@ -153,6 +179,26 @@ try:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
     
+    def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+        try:
+            payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+            email: str = payload.get("sub")
+            if email is None:
+                raise HTTPException(status_code=401, detail="Invalid token")
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        if email not in users_db.users:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        user_data = users_db.users[email]
+        return User(
+            email=user_data['email'],
+            full_name=user_data['full_name'],
+            role=user_data['role'],
+            disabled=user_data['disabled']
+        )
+    
     # Routes
     @app.post("/register", response_model=Token)
     async def register(user: UserCreate):
@@ -165,7 +211,11 @@ try:
             'role': user.role,
             'password': get_password_hash(user.password),
             'created_at': datetime.now(UTC),
-            'disabled': False
+            'disabled': False,
+            'matricula': user.matricula,
+            'setor_id': user.setor_id,
+            'departamento_id': user.departamento_id,
+            'filial_id': user.filial_id
         }
         users_db.users[user.email] = user_data
         
@@ -184,15 +234,36 @@ try:
         access_token = create_access_token(data={"sub": user.email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
         return {"access_token": access_token, "token_type": "bearer"}
     
+    @app.get("/users/me", response_model=User)
+    async def read_users_me(current_user: User = Depends(get_current_user)):
+        return current_user
+    
     @app.get("/setores")
     async def get_setores():
         return {"setores": list(setores_db.setores.values())}
+    
+    @app.get("/departamentos")
+    async def get_departamentos():
+        return {"departamentos": list(departamentos_db.departamentos.values())}
+    
+    @app.get("/filiais")
+    async def get_filiais():
+        return {"filiais": list(filiais_db.filiais.values())}
+    
+    @app.get("/permissions")
+    async def get_permissions(current_user: User = Depends(get_current_user)):
+        permissions = {
+            "user": ["read"],
+            "admin": ["read", "write", "delete"]
+        }
+        return {"permissions": permissions.get(current_user.role, [])}
 
     # Debug endpoint
     @app.get("/debug")
     async def debug():
         return {
             "users": list(users_db.users.keys()),
+            "setores_count": len(setores_db.setores),
             "env_vars": {
                 "GEMINI_API_KEY": "set" if os.getenv("GEMINI_API_KEY") else "not set",
                 "SECRET_KEY": "set" if os.getenv("SECRET_KEY") else "not set",
@@ -202,6 +273,8 @@ try:
 
 except Exception as e:
     print(f"Error loading API: {e}")
+    import traceback
+    traceback.print_exc()
 
 # Vercel handler
 def handler(request, context):
