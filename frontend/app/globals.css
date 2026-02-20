@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 30, 41, 59;
+  --background-start-rgb: 241, 245, 249;
+  --background-end-rgb: 241, 245, 249;
+
+  /* Light mode colors */
+  --primary-bg: #F1F5F9;
+  --primary-surface: #FFFFFF;
+  --primary-main: #0045D6;
+  --primary-text: #1E293B;
+  --primary-border: #E2E8F0;
+  --primary-selected: #EFF6FF;
+  --primary-paragraph: #64748B;
+  --primary-secondary: #64748B;
+  --primary-header: #FFFFFF;
+  --primary-sidebar: #F8FAFC;
+  
+  /* Light mode gradient colors */
+  --primary-gradientStart: #2563EB;
+  --primary-gradientVia: #1D4ED8;
+  --primary-gradientEnd: #4338CA;
+}
+
+.dark {
+  --foreground-rgb: 226, 232, 240;
+  --background-start-rgb: 11, 17, 32;
+  --background-end-rgb: 11, 17, 32;
+
+  /* Dark mode colors */
+  --dark-bg: #020617;
+  --dark-surface: #1E293B;
+  --dark-main: #60A5FA;
+  --dark-text: #F1F5F9;
+  --dark-border: #0F172A;
+  --dark-header: #0B1120;
+  --dark-paragraph: #94A3B8;
+  --dark-sidebar: #0F172A;
+  --dark-selected: #1E40AF;
+  --dark-secondary: #64748B;
+  --dark-gradientStart: #1E40AF;
+  --dark-gradientVia: #1E3A8A;
+  --dark-gradientEnd: #312E81;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
