@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: auth-system-backend
+    runtime: python
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MASTER_ADMIN_EMAIL
+        value: admin@example.com
+      - key: MASTER_ADMIN_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        value: change-this-to-a-random-secret-key
+      - key: ALLOWED_ORIGINS
+        value: "https://auth-system-frontend.onrender.com,http://localhost:3000"
+
+  - type: web
+    name: auth-system-frontend
+    runtime: node
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://auth-system-backend.onrender.com
