@@ -1,5 +1,5 @@
 // API configuration - use environment variable in production
-const API_BASE_URL = 'https://api-nine-ochre-18.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-nine-ochre-18.vercel.app';
 
 export const API_URL = API_BASE_URL;
 

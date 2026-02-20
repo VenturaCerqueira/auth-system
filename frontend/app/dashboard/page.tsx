@@ -8,7 +8,7 @@ import Footer from '../components/Footer'
 import FilterPanel from '../components/FilterPanel'
 import ChatPanel from '../components/ChatPanel'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell } from 'recharts'
-import { DollarSign, TrendingUp, Target, Users, Database, Calendar, Building, User, MessageCircle, Download } from 'lucide-react'
+import { DollarSign, TrendingUp, Target, Users, Database, Calendar, Building, User, MessageCircle, Download, Menu, X } from 'lucide-react'
 
 interface User {
   email: string
@@ -130,6 +130,9 @@ export default function Dashboard() {
 
   // Modal state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+
+  // Mobile sidebar state
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   const router = useRouter()
 
@@ -511,8 +514,8 @@ export default function Dashboard() {
     <div className="min-h-screen bg-primary-bg dark:bg-dark-bg transition-colors duration-300">
       <Header />
       <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-8">
+        <Sidebar isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} />
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <div className="mb-8 flex items-center justify-between">
               <div>

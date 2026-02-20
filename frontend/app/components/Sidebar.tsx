@@ -14,15 +14,32 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  X
 } from 'lucide-react'
 
 const SIDEBAR_STORAGE_KEY = 'sidebar-collapsed'
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Initialize collapsed state from localStorage on mount
   useEffect(() => {
@@ -52,17 +69,51 @@ export default function Sidebar() {
 
   const isActive = (href: string) => pathname === href
 
+  // Handle mobile close
+  const handleLinkClick = () => {
+    if (isMobile && onClose) {
+      onClose()
+    }
+  }
+
+  // Don't render on mobile unless open
+  if (isMobile && !isOpen) {
+    return null
+  }
+
   return (
-    <aside 
-      className={`
-        relative flex flex-col h-screen bg-gradient-to-b from-primary-surface to-primary-bg 
-        dark:from-dark-sidebar dark:to-dark-bg 
-        border-r border-primary-border dark:border-dark-border
-        shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50
-        transition-all duration-300 ease-in-out
-        ${collapsed ? 'w-20' : 'w-64'}
-      `}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isMobile && isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      <aside 
+        className={`
+          relative flex flex-col h-screen bg-gradient-to-b from-primary-surface to-primary-bg 
+          dark:from-dark-sidebar dark:to-dark-bg 
+          border-r border-primary-border dark:border-dark-border
+          shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50
+          transition-all duration-300 ease-in-out
+          z-50
+          ${isMobile 
+            ? `fixed top-0 left-0 w-64 ${isOpen ? 'translate-x-0' : '-translate-x-full'}` 
+            : `${collapsed ? 'w-20' : 'w-64'}`
+          }
+        `}
+      >
+          {/* Mobile Close Button */}
+        {isMobile && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 lg:hidden"
+          >
+            <X size={20} />
+          </button>
+        )}
       {/* Header Section */}
       <div className="p-4 border-b border-primary-border dark:border-dark-border">
         <div className="flex items-center justify-between">
@@ -202,5 +253,6 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   )
 }
