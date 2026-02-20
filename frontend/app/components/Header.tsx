@@ -17,7 +17,7 @@ export default function Header() {
   useEffect(() => {
     // Get location and weather using browser Geolocation API
     const fetchLocationAndWeather = async () => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-nine-ochre-18.vercel.app'
       
       // Try browser geolocation first
       if (navigator.geolocation) {

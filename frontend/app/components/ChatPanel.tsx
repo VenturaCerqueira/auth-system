@@ -52,7 +52,7 @@ export default function ChatPanel({ isOpen, onToggle }: ChatPanelProps) {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

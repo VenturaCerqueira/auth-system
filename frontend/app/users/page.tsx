@@ -75,27 +75,27 @@ export default function UsersPage() {
 
       try {
         const [usersResponse, permissionsResponse, setoresResponse, departamentosResponse, filiaisResponse] = await Promise.all([
-          fetch('http://localhost:8000/users', {
+          fetch('https://api-nine-ochre-18.vercel.app/users', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('http://localhost:8000/permissions', {
+          fetch('https://api-nine-ochre-18.vercel.app/permissions', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('http://localhost:8000/setores', {
+          fetch('https://api-nine-ochre-18.vercel.app/setores', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('http://localhost:8000/departamentos', {
+          fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('http://localhost:8000/filiais', {
+          fetch('https://api-nine-ochre-18.vercel.app/filiais', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -146,7 +146,7 @@ export default function UsersPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/users/${email}`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/users/${email}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -173,7 +173,7 @@ export default function UsersPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/users/${email}/password`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/users/${email}/password`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -202,7 +202,7 @@ export default function UsersPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/users/${email}`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/users/${email}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -224,7 +224,7 @@ export default function UsersPage() {
     if (!token) return
 
     try {
-      const response = await fetch('http://localhost:8000/register', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,7 +244,7 @@ export default function UsersPage() {
       if (response.ok) {
         const data = await response.json()
         // Refresh users list
-        const usersResponse = await fetch('http://localhost:8000/users', {
+        const usersResponse = await fetch('https://api-nine-ochre-18.vercel.app/users', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

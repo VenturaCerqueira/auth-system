@@ -34,7 +34,7 @@ export default function FiliaisPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/filiais', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/filiais', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -62,7 +62,7 @@ export default function FiliaisPage() {
     if (!token) return
 
     try {
-      const response = await fetch('http://localhost:8000/filiais', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/filiais', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -89,7 +89,7 @@ export default function FiliaisPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/filiais/${filial.id}`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/filiais/${filial.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -117,7 +117,7 @@ export default function FiliaisPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/filiais/${filialId}`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/filiais/${filialId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

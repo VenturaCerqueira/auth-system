@@ -43,12 +43,12 @@ export default function DepartamentosPage() {
 
     try {
       const [departamentosResponse, filiaisResponse] = await Promise.all([
-        fetch('http://localhost:8000/departamentos', {
+        fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         }),
-        fetch('http://localhost:8000/filiais', {
+        fetch('https://api-nine-ochre-18.vercel.app/filiais', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -81,7 +81,7 @@ export default function DepartamentosPage() {
     if (!token) return
 
     try {
-      const response = await fetch('http://localhost:8000/departamentos', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -102,7 +102,7 @@ export default function DepartamentosPage() {
     if (!token) return
 
     try {
-      const response = await fetch('http://localhost:8000/departamentos', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -129,7 +129,7 @@ export default function DepartamentosPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/departamentos/${departamento.id}`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/departamentos/${departamento.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -157,7 +157,7 @@ export default function DepartamentosPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/departamentos/${departamentoId}`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/departamentos/${departamentoId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

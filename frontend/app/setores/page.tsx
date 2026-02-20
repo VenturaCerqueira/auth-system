@@ -62,22 +62,22 @@ export default function SetoresPage() {
 
     try {
       const [setoresResponse, usersResponse, departamentosResponse, filiaisResponse] = await Promise.all([
-        fetch('http://localhost:8000/setores', {
+        fetch('https://api-nine-ochre-18.vercel.app/setores', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         }),
-        fetch('http://localhost:8000/users', {
+        fetch('https://api-nine-ochre-18.vercel.app/users', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         }),
-        fetch('http://localhost:8000/departamentos', {
+        fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         }),
-        fetch('http://localhost:8000/filiais', {
+        fetch('https://api-nine-ochre-18.vercel.app/filiais', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -123,7 +123,7 @@ export default function SetoresPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/setores', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/setores', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -151,7 +151,7 @@ export default function SetoresPage() {
     if (!token) return
 
     try {
-      const response = await fetch('http://localhost:8000/setores', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/setores', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -178,7 +178,7 @@ export default function SetoresPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/setores/${setor.id}`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/setores/${setor.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -206,7 +206,7 @@ export default function SetoresPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`http://localhost:8000/setores/${setorId}`, {
+      const response = await fetch(`https://api-nine-ochre-18.vercel.app/setores/${setorId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

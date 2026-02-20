@@ -50,9 +50,9 @@ export default function Register() {
   const fetchOptions = async () => {
     try {
       const [setoresRes, departamentosRes, filiaisRes] = await Promise.all([
-        fetch('http://localhost:8000/setores'),
-        fetch('http://localhost:8000/departamentos'),
-        fetch('http://localhost:8000/filiais')
+        fetch('https://api-nine-ochre-18.vercel.app/setores'),
+        fetch('https://api-nine-ochre-18.vercel.app/departamentos'),
+        fetch('https://api-nine-ochre-18.vercel.app/filiais')
       ])
 
       if (setoresRes.ok) {
@@ -80,7 +80,7 @@ export default function Register() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:8000/register', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

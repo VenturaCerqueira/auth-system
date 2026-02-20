@@ -33,7 +33,7 @@ export default function ChangeEmailPage() {
       }
 
       try {
-        const response = await fetch('http://localhost:8000/users/me', {
+        const response = await fetch('https://api-nine-ochre-18.vercel.app/users/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -76,7 +76,7 @@ export default function ChangeEmailPage() {
 
     setSubmitting(true)
     try {
-      const response = await fetch('http://localhost:8000/users/me', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/users/me', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

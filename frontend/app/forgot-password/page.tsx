@@ -21,7 +21,7 @@ export default function ForgotPassword() {
     setSuccess(false)
 
     try {
-      const response = await fetch('http://localhost:8000/forgot-password', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

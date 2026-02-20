@@ -135,12 +135,12 @@ export default function SettingsPage() {
 
       try {
         const [userResponse, permissionsResponse] = await Promise.all([
-          fetch('http://localhost:8000/users/me', {
+          fetch('https://api-nine-ochre-18.vercel.app/users/me', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('http://localhost:8000/permissions', {
+          fetch('https://api-nine-ochre-18.vercel.app/permissions', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -200,7 +200,7 @@ export default function SettingsPage() {
       }
 
       // Save to backend
-      const response = await fetch('http://localhost:8000/users/settings', {
+      const response = await fetch('https://api-nine-ochre-18.vercel.app/users/settings', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

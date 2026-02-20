@@ -133,7 +133,7 @@ export default function Dashboard() {
 
   const router = useRouter()
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-nine-ochre-18.vercel.app'
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
