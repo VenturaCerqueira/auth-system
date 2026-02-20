@@ -76,6 +76,26 @@ export default function DepartamentosPage() {
     }
   }
 
+  const fetchDepartamentos = async () => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    try {
+      const response = await fetch('http://localhost:8000/departamentos', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setDepartamentos(data.departamentos)
+      }
+    } catch (err) {
+      console.error('Error fetching departamentos:', err)
+    }
+  }
+
   const handleCreateDepartamento = async (e: React.FormEvent) => {
     e.preventDefault()
     const token = localStorage.getItem('token')
@@ -93,7 +113,7 @@ export default function DepartamentosPage() {
 
       if (response.ok) {
         setShowModal(false)
-        setNewDepartamento({ id: '', name: '', code: '' })
+        setNewDepartamento({ id: '', name: '', code: '', filial_id: '' })
         fetchDepartamentos()
       } else {
         const errorData = await response.json()
@@ -255,6 +275,7 @@ export default function DepartamentosPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nome</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Código</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Filial</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
@@ -296,6 +317,9 @@ export default function DepartamentosPage() {
                           ) : (
                             departamento.code
                           )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          {departamento.filial_id}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           {editingDepartamento?.id === departamento.id ? (
@@ -377,12 +401,22 @@ export default function DepartamentosPage() {
                   required
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filial ID</label>
+                <input
+                  type="text"
+                  value={newDepartamento.filial_id}
+                  onChange={(e) => setNewDepartamento({ ...newDepartamento, filial_id: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  required
+                />
+              </div>
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowModal(false)
-                    setNewDepartamento({ id: '', name: '', code: '' })
+                    setNewDepartamento({ id: '', name: '', code: '', filial_id: '' })
                   }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                 >
