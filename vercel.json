@@ -1,18 +1,7 @@
 {
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/out",
-  "installCommand": "cd frontend && npm install",
   "framework": "nextjs",
-  "regions": ["iad1"],
-  "functions": {
-    "api/main.py": {
-      "runtime": "python3.11"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/main.py"
-    }
-  ]
+  "build": {
+    "src": "frontend",
+    "output": "dist"
+  }
 }

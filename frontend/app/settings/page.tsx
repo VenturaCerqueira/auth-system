@@ -313,12 +313,23 @@ export default function SettingsPage() {
           }
         }
       }))
+    } else if (category === 'notifications' || category === 'privacy' || category === 'dashboard') {
+      setSettings(prev => ({
+        ...prev,
+        [category]: {
+          ...(prev[category as keyof typeof prev] as object),
+          [key]: value
+        }
+      }))
+    } else if (category === 'theme' || category === 'language' || category === 'timezone') {
+      setSettings(prev => ({
+        ...prev,
+        [category]: value
+      }))
     } else {
       setSettings(prev => ({
         ...prev,
-        [category]: typeof prev[category as keyof typeof prev] === 'object'
-          ? { ...prev[category as keyof typeof prev], [key]: value }
-          : value
+        [category]: value
       }))
     }
   }
