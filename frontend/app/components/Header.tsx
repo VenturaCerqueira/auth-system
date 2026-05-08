@@ -5,11 +5,19 @@ import Image from 'next/image'
 import { LogOut, User, MapPin, Clock, Cloud, Bell, Settings, Menu, ChevronDown, MessageCircle, X } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
+type ProfileResponse = {
+  email?: string
+  full_name?: string
+  role?: string
+  disabled?: boolean
+}
+
 export default function Header() {
   const router = useRouter()
   const [location, setLocation] = useState('')
   const [time, setTime] = useState('')
   const [weather, setWeather] = useState('')
+  const [profileFullName, setProfileFullName] = useState('')
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -18,14 +26,14 @@ export default function Header() {
     // Get location and weather using browser Geolocation API
     const fetchLocationAndWeather = async () => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-nine-ochre-18.vercel.app'
-      
+
       // Try browser geolocation first
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords
             setLocation('Salvador, BA')
-            
+
             try {
               const weatherRes = await fetch(`${apiUrl}/weather?latitude=${latitude}&longitude=${longitude}`)
               if (weatherRes.ok) {
@@ -45,11 +53,11 @@ export default function Header() {
             try {
               const locationRes = await fetch(`${apiUrl}/location`)
               if (!locationRes.ok) throw new Error('Location fetch failed')
-              
+
               const data = await locationRes.json()
               if (data.latitude && data.longitude) {
                 setLocation(`${data.city}, ${data.region}`)
-                
+
                 const weatherRes = await fetch(`${apiUrl}/weather?latitude=${data.latitude}&longitude=${data.longitude}`)
                 if (weatherRes.ok) {
                   const weatherData = await weatherRes.json()
@@ -70,11 +78,11 @@ export default function Header() {
         try {
           const locationRes = await fetch(`${apiUrl}/location`)
           if (!locationRes.ok) throw new Error('Location fetch failed')
-          
+
           const data = await locationRes.json()
           if (data.latitude && data.longitude) {
             setLocation(`${data.city}, ${data.region}`)
-            
+
             const weatherRes = await fetch(`${apiUrl}/weather?latitude=${data.latitude}&longitude=${data.longitude}`)
             if (weatherRes.ok) {
               const weatherData = await weatherRes.json()
@@ -99,6 +107,29 @@ export default function Header() {
     }, 1000)
 
     return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    // Fetch logged user's full name for the Header dropdown
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-nine-ochre-18.vercel.app'
+        const res = await fetch(`${apiUrl}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!res.ok) return
+        const data = (await res.json()) as ProfileResponse
+        setProfileFullName(data.full_name || '')
+      } catch {
+        // ignore
+      }
+    }
+
+    fetchProfile()
   }, [])
 
   // Close dropdown when clicking outside
@@ -207,8 +238,8 @@ export default function Header() {
                   <User size={16} className="text-white" />
                 </div>
                 <span className="hidden md:inline font-medium text-sm">Perfil</span>
-                <ChevronDown 
-                  size={16} 
+                <ChevronDown
+                  size={16}
                   className={`transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`}
                 />
               </button>
@@ -218,7 +249,9 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-3 border-b border-slate-100 dark:border-slate-700">
                     <p className="font-semibold text-slate-800 dark:text-white">Usuário</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">usuario@exemplo.com</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {profileFullName || 'Carregando...'}
+                    </p>
                   </div>
                   <div className="p-2">
                     <button
@@ -279,28 +312,26 @@ export default function Header() {
                       className="flex items-center space-x-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl"
                     >
                       <Icon size={14} className="text-blue-500" />
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {item.label}
-                      </span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{item.label}</span>
                     </div>
                   )
                 })}
               </div>
-              
+
               {/* Action Buttons */}
               <div className="flex flex-col space-y-2 pt-2">
                 <button className="flex items-center space-x-3 px-4 py-3 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
                   <Bell size={20} />
                   <span className="font-medium">Notificações</span>
                 </button>
-                <button 
+                <button
                   onClick={() => router.push('/settings')}
                   className="flex items-center space-x-3 px-4 py-3 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                 >
                   <Settings size={20} />
                   <span className="font-medium">Configurações</span>
                 </button>
-                <button 
+                <button
                   onClick={() => router.push('/profile')}
                   className="flex items-center space-x-3 px-4 py-3 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                 >
@@ -322,3 +353,4 @@ export default function Header() {
     </header>
   )
 }
+

@@ -204,23 +204,48 @@ export default function UsersPage() {
     const token = localStorage.getItem('token')
     if (!token) return
 
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-nine-ochre-18.vercel.app'
+    const api = (path: string) => `${API_BASE_URL}${path}`
+
     try {
-      const response = await fetch(`https://api-nine-ochre-18.vercel.app/users/${email}`, {
+      const response = await fetch(api(`/users/${email}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       })
 
-      if (response.ok) {
-        setUsers(users.filter(user => user.email !== email))
-      } else {
-        setError('Falha ao excluir usuário')
+      if (!response.ok) {
+        try {
+          const errorData = await response.json()
+          setError(errorData?.detail || 'Falha ao excluir usuário')
+        } catch {
+          setError('Falha ao excluir usuário')
+        }
+        return
       }
-    } catch (err) {
+
+      // Refresh da lista após excluir (evita problemas de closure/estado desatualizado)
+      const usersResponse = await fetch(api('/users'), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json()
+        setUsers(usersData.users)
+      } else {
+        // fallback: remove do estado local
+        setUsers(prev => prev.filter(user => user.email !== email))
+      }
+
+      setError('')
+    } catch {
       setError('Falha ao excluir usuário')
     }
   }
+
 
   const handleAddUser = async () => {
     const token = localStorage.getItem('token')
