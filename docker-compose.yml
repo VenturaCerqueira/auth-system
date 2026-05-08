@@ -10,6 +10,11 @@ services:
       - MASTER_ADMIN_EMAIL=${MASTER_ADMIN_EMAIL:-admin@example.com}
       - MASTER_ADMIN_PASSWORD=${MASTER_ADMIN_PASSWORD}
       - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - MYSQL_HOST=186.202.152.82
+      - MYSQL_USER=ugmetrics
+      - MYSQL_PASSWORD=Metric@2026
+      - MYSQL_DATABASE=ugmetrics
+
     volumes:
       - ./backend:/app
     healthcheck:

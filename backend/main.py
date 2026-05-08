@@ -1,4 +1,14 @@
+import sys
+from pathlib import Path
+
+# Ensure `backend` can be imported when running `python backend/main.py`
+# (adds the project root to sys.path)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
+
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
@@ -41,32 +51,23 @@ model = genai.GenerativeModel('gemini-pro')
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto", default="pbkdf2_sha256")
 security = HTTPBearer()
 
-class UserDatabase:
-    def __init__(self):
-        self.users = {}
-        # Pre-populate with master admin user from environment variables
-        master_email = os.getenv("MASTER_ADMIN_EMAIL", "admin@example.com")
-        master_password = os.getenv("MASTER_ADMIN_PASSWORD", "admin123")  # Default for development
-        hashed_master_password = pwd_context.hash(master_password)
-        self.users[master_email] = {
-            'email': master_email,
-            'full_name': 'Master Admin',
-            'role': 'admin',
-            'password': hashed_master_password,
-            'created_at': datetime.now(UTC),
-            'disabled': False
-        }
+from backend.mysql_repo import (
 
-    def add_user(self, email, user_data):
-        self.users[email] = user_data
+    init_mysql,
+    MysqlUserRepo,
+    MysqlSetorRepo,
+    MysqlDepartamentoRepo,
+    MysqlFilialRepo,
+)
 
-    def get_user(self, email):
-        return self.users.get(email)
 
-    def user_exists(self, email):
-        return email in self.users
+# Initialize MySQL + ensure tables exist
+init_mysql()
 
-users_db = UserDatabase()
+users_repo = MysqlUserRepo()
+setores_repo = MysqlSetorRepo()
+departamentos_repo = MysqlDepartamentoRepo()
+filiais_repo = MysqlFilialRepo()
 
 class FileDatabase:
     def __init__(self):
@@ -123,94 +124,62 @@ class ExcelDataDatabase:
 
 excel_data_db = ExcelDataDatabase()
 
-class SetorDatabase:
-    def __init__(self):
-        self.setores = {}
+# Seed master admin + sample hierarchical data (if tables are empty)
+master_email = os.getenv("MASTER_ADMIN_EMAIL", "admin@example.com")
+master_password = os.getenv("MASTER_ADMIN_PASSWORD", "admin123")
+if not users_repo.user_exists(master_email):
+    users_repo.create_user(
+        email=master_email,
+        full_name="Master Admin",
+        role="admin",
+        password_hash=pwd_context.hash(master_password),
+        disabled=False,
+        matricula=None,
+        setor_id=None,
+        departamento_id=None,
+        filial_id=None,
+    )
 
-    def add_setor(self, setor_id, setor_data):
-        self.setores[setor_id] = setor_data
+# Seed filiais/departamentos/setores only if empty
+if not filiais_repo.get_all_filiais():
+    filiais_repo.add_filial('1', {'id': '1', 'name': 'Filial São Paulo', 'code': 'SP'})
+    filiais_repo.add_filial('2', {'id': '2', 'name': 'Filial Rio de Janeiro', 'code': 'RJ'})
+    filiais_repo.add_filial('3', {'id': '3', 'name': 'Filial Belo Horizonte', 'code': 'BH'})
 
-    def get_setor(self, setor_id):
-        return self.setores.get(setor_id)
+if not departamentos_repo.get_all_departamentos():
+    departamentos_repo.add_departamento('1', {'id': '1', 'name': 'Departamento de RH', 'code': 'RH', 'filial_id': '1'})
+    departamentos_repo.add_departamento('2', {'id': '2', 'name': 'Departamento de TI', 'code': 'TI', 'filial_id': '1'})
+    departamentos_repo.add_departamento('3', {'id': '3', 'name': 'Departamento de Vendas', 'code': 'VEN', 'filial_id': '2'})
+    departamentos_repo.add_departamento('4', {'id': '4', 'name': 'Departamento de Marketing', 'code': 'MKT', 'filial_id': '2'})
 
-    def setor_exists(self, setor_id):
-        return setor_id in self.setores
-
-    def get_all_setores(self):
-        return list(self.setores.values())
-
-    def delete_setor(self, setor_id):
-        return self.setores.pop(setor_id, None)
-
-class DepartamentoDatabase:
-    def __init__(self):
-        self.departamentos = {}
-
-    def add_departamento(self, dep_id, dep_data):
-        self.departamentos[dep_id] = dep_data
-
-    def get_departamento(self, dep_id):
-        return self.departamentos.get(dep_id)
-
-    def departamento_exists(self, dep_id):
-        return dep_id in self.departamentos
-
-    def get_all_departamentos(self):
-        return list(self.departamentos.values())
-
-    def delete_departamento(self, dep_id):
-        return self.departamentos.pop(dep_id, None)
-
-class FilialDatabase:
-    def __init__(self):
-        self.filiais = {}
-
-    def add_filial(self, filial_id, filial_data):
-        self.filiais[filial_id] = filial_data
-
-    def get_filial(self, filial_id):
-        return self.filiais.get(filial_id)
-
-    def filial_exists(self, filial_id):
-        return filial_id in self.filiais
-
-    def get_all_filiais(self):
-        return list(self.filiais.values())
-
-    def delete_filial(self, filial_id):
-        return self.filiais.pop(filial_id, None)
-
-setores_db = SetorDatabase()
-departamentos_db = DepartamentoDatabase()
-filiais_db = FilialDatabase()
-
-# Add sample data for testing with hierarchical relationships
-filiais_db.add_filial('1', {'id': '1', 'name': 'Filial São Paulo', 'code': 'SP'})
-filiais_db.add_filial('2', {'id': '2', 'name': 'Filial Rio de Janeiro', 'code': 'RJ'})
-filiais_db.add_filial('3', {'id': '3', 'name': 'Filial Belo Horizonte', 'code': 'BH'})
-
-departamentos_db.add_departamento('1', {'id': '1', 'name': 'Departamento de RH', 'code': 'RH', 'filial_id': '1'})
-departamentos_db.add_departamento('2', {'id': '2', 'name': 'Departamento de TI', 'code': 'TI', 'filial_id': '1'})
-departamentos_db.add_departamento('3', {'id': '3', 'name': 'Departamento de Vendas', 'code': 'VEN', 'filial_id': '2'})
-departamentos_db.add_departamento('4', {'id': '4', 'name': 'Departamento de Marketing', 'code': 'MKT', 'filial_id': '2'})
-
-setores_db.add_setor('1', {'id': '1', 'name': 'Setor Administrativo', 'code': 'ADM', 'departamento_id': '1'})
-setores_db.add_setor('2', {'id': '2', 'name': 'Setor Financeiro', 'code': 'FIN', 'departamento_id': '1'})
-setores_db.add_setor('3', {'id': '3', 'name': 'Setor Operacional', 'code': 'OPE', 'departamento_id': '2'})
-setores_db.add_setor('4', {'id': '4', 'name': 'Setor Desenvolvimento', 'code': 'DEV', 'departamento_id': '2'})
-setores_db.add_setor('5', {'id': '5', 'name': 'Setor Vendas Internas', 'code': 'VINT', 'departamento_id': '3'})
-setores_db.add_setor('6', {'id': '6', 'name': 'Setor Vendas Externas', 'code': 'VEXT', 'departamento_id': '3'})
+if not setores_repo.get_all_setores():
+    setores_repo.add_setor('1', {'id': '1', 'name': 'Setor Administrativo', 'code': 'ADM', 'departamento_id': '1'})
+    setores_repo.add_setor('2', {'id': '2', 'name': 'Setor Financeiro', 'code': 'FIN', 'departamento_id': '1'})
+    setores_repo.add_setor('3', {'id': '3', 'name': 'Setor Operacional', 'code': 'OPE', 'departamento_id': '2'})
+    setores_repo.add_setor('4', {'id': '4', 'name': 'Setor Desenvolvimento', 'code': 'DEV', 'departamento_id': '2'})
+    setores_repo.add_setor('5', {'id': '5', 'name': 'Setor Vendas Internas', 'code': 'VINT', 'departamento_id': '3'})
+    setores_repo.add_setor('6', {'id': '6', 'name': 'Setor Vendas Externas', 'code': 'VEXT', 'departamento_id': '3'})
 
 app = FastAPI(title="Auth System API", version="1.0.0")
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
-    allow_credentials=False,  # No cookies used, so disable credentials
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# DEBUG: garante que o cabeçalho CORS exista também em respostas (alguns proxies/handlers podem ignorar middleware)
+@app.middleware("http")
+async def add_cors_debug_headers(request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("Access-Control-Allow-Origin", "*")
+    response.headers.setdefault("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+    response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
+    return response
+
 
 # Pydantic models
 class UserCreate(BaseModel):
@@ -354,6 +323,24 @@ class ExcelDataUpload(BaseModel):
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
+# MySQL integration (users + filiais/departamentos/setores)
+from backend.mysql_repo import (
+    init_mysql,
+    MysqlUserRepo,
+    MysqlFilialRepo,
+    MysqlDepartamentoRepo,
+    MysqlSetorRepo,
+)
+
+# Initialize MySQL + ensure schema exists
+init_mysql()
+
+users_repo = MysqlUserRepo()
+filiais_repo = MysqlFilialRepo()
+departamentos_repo = MysqlDepartamentoRepo()
+setores_repo = MysqlSetorRepo()
+
+
 def get_password_hash(password):
     return pwd_context.hash(password)
 
@@ -406,46 +393,40 @@ def get_current_user(token: HTTPAuthorizationCredentials = Depends(security)):
     except JWTError:
         raise credentials_exception
 
-    # Fetch user from in-memory database
-    if not users_db.user_exists(email):
+    # Fetch user from MySQL
+    user_data = users_repo.get_user_by_email(email)
+    if not user_data:
         raise credentials_exception
 
-    user_data = users_db.get_user(email)
     return User(
         email=user_data['email'],
         full_name=user_data['full_name'],
         role=user_data['role'],
-        disabled=user_data['disabled'],
+        disabled=bool(user_data['disabled']),
         matricula=user_data.get('matricula'),
         setor_id=user_data.get('setor_id'),
         departamento_id=user_data.get('departamento_id'),
-        filial_id=user_data.get('filial_id')
+        filial_id=user_data.get('filial_id'),
     )
 
 # Routes
 @app.post("/register", response_model=Token)
 async def register(user: UserCreate):
-    # Check if user exists in in-memory database
-    if users_db.user_exists(user.email):
+    if users_repo.user_exists(user.email):
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Create user in in-memory database
-    hashed_password = get_password_hash(user.password)
-    user_data = {
-        'email': user.email,
-        'full_name': user.full_name,
-        'role': 'user',
-        'password': hashed_password,
-        'created_at': datetime.now(UTC),
-        'disabled': False,
-        'matricula': user.matricula,
-        'setor_id': user.setor_id,
-        'departamento_id': user.departamento_id,
-        'filial_id': user.filial_id
-    }
-    users_db.add_user(user.email, user_data)
+    users_repo.create_user(
+        email=user.email,
+        full_name=user.full_name,
+        role="user",
+        password_hash=get_password_hash(user.password),
+        disabled=False,
+        matricula=user.matricula,
+        setor_id=user.setor_id,
+        departamento_id=user.departamento_id,
+        filial_id=user.filial_id,
+    )
 
-    # Create JWT token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
@@ -454,17 +435,17 @@ async def register(user: UserCreate):
 
 @app.post("/login", response_model=Token)
 async def login(user: UserLogin):
-    # Verify user in in-memory database
-    user_exists = users_db.user_exists(user.email)
-    if not user_exists:
+    user_data = users_repo.get_user_by_email(user.email)
+    if not user_data:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
 
-    user_data = users_db.get_user(user.email)
-    password_valid = verify_password(user.password, user_data['password'])
+    password_valid = verify_password(user.password, user_data["password_hash"])
     if not password_valid:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
 
-    # Create JWT token
+    if bool(user_data.get("disabled")):
+        raise HTTPException(status_code=403, detail="User disabled")
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
@@ -473,8 +454,7 @@ async def login(user: UserLogin):
 
 @app.post("/forgot-password")
 async def forgot_password(user: ForgotPassword):
-    # Check if user exists in in-memory database
-    if not users_db.user_exists(user.email):
+    if not users_repo.user_exists(user.email):
         raise HTTPException(status_code=400, detail="Email not found")
 
     # In a real application, you would send an email with a reset link
@@ -487,25 +467,31 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 @app.put("/users/me", response_model=User)
 async def update_user(user_update: UserCreate, current_user: User = Depends(get_current_user)):
-    # Update user in in-memory database
-    if not users_db.user_exists(current_user.email):
+    # Update user in MySQL
+    user_data = users_repo.get_user_by_email(current_user.email)
+    if not user_data:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_data = users_db.get_user(current_user.email)
-    user_data['email'] = user_update.email
-    user_data['full_name'] = user_update.full_name
-    # Role is not updated via this endpoint
-    users_db.add_user(user_update.email, user_data)
-
-    # If email changed, remove old entry
-    if user_update.email != current_user.email:
-        users_db.users.pop(current_user.email, None)
+    # Email change handled by deleting old row then inserting new one with same password hash
+    password_hash = user_data["password_hash"]
+    users_repo.delete_user(current_user.email)
+    users_repo.create_user(
+        email=user_update.email,
+        full_name=user_update.full_name,
+        role=user_data["role"],
+        password_hash=password_hash,
+        disabled=user_data["disabled"],
+        matricula=user_data.get("matricula"),
+        setor_id=user_data.get("setor_id"),
+        departamento_id=user_data.get("departamento_id"),
+        filial_id=user_data.get("filial_id"),
+    )
 
     return User(
-        email=user_data['email'],
-        full_name=user_data['full_name'],
-        role=user_data['role'],
-        disabled=user_data['disabled']
+        email=user_update.email,
+        full_name=user_update.full_name,
+        role=user_data["role"],
+        disabled=bool(user_data["disabled"]),
     )
 
 @app.get("/users")
@@ -515,12 +501,12 @@ async def get_all_users(current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     users = []
-    for email, user_data in users_db.users.items():
+    for user_data in users_repo.list_users():
         users.append({
             "email": user_data['email'],
             "full_name": user_data['full_name'],
             "role": user_data['role'],
-            "disabled": user_data['disabled'],
+            "disabled": bool(user_data['disabled']),
             "matricula": user_data.get('matricula'),
             "setor_id": user_data.get('setor_id'),
             "departamento_id": user_data.get('departamento_id'),
@@ -534,17 +520,19 @@ async def update_user_admin(email: str, user_update: UserUpdate, current_user: U
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    if not users_db.user_exists(email):
+    if not users_repo.user_exists(email):
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_data = users_db.get_user(email)
-    user_data['full_name'] = user_update.full_name
-    user_data['role'] = user_update.role
-    user_data['disabled'] = user_update.disabled
-    user_data['setor_id'] = user_update.setor_id
-    user_data['departamento_id'] = user_update.departamento_id
-    user_data['filial_id'] = user_update.filial_id
-    users_db.add_user(email, user_data)
+    users_repo.update_user(
+        email=email,
+        full_name=user_update.full_name,
+        role=user_update.role,
+        disabled=user_update.disabled,
+        matricula=user_data.get("matricula") if (user_data := users_repo.get_user_by_email(email)) else None,
+        setor_id=user_update.setor_id,
+        departamento_id=user_update.departamento_id,
+        filial_id=user_update.filial_id,
+    )
 
     return {"message": "User updated successfully"}
 
@@ -554,13 +542,10 @@ async def change_user_password(email: str, password_data: ChangePassword, curren
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    if not users_db.user_exists(email):
+    if not users_repo.user_exists(email):
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_data = users_db.get_user(email)
-    user_data['password'] = get_password_hash(password_data.new_password)
-    users_db.add_user(email, user_data)
-
+    users_repo.set_user_password_hash(email, get_password_hash(password_data.new_password))
     return {"message": "Password changed successfully"}
 
 @app.delete("/users/{email}")
@@ -569,15 +554,14 @@ async def delete_user(email: str, current_user: User = Depends(get_current_user)
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    if not users_db.user_exists(email):
+    if not users_repo.user_exists(email):
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Prevent deleting the master admin
     master_email = os.getenv("MASTER_ADMIN_EMAIL", "admin@example.com")
     if email == master_email:
         raise HTTPException(status_code=400, detail="Cannot delete master admin")
 
-    del users_db.users[email]
+    users_repo.delete_user(email)
     return {"message": "User deleted successfully"}
 
 @app.get("/permissions")
@@ -592,77 +576,71 @@ async def get_permissions(current_user: User = Depends(get_current_user)):
 # Setor CRUD endpoints
 @app.get("/setores")
 async def get_setores():
-    return {"setores": setores_db.get_all_setores()}
+    return {"setores": setores_repo.get_all_setores()}
 
 @app.post("/setores")
 async def create_setor(setor: Setor, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if setores_db.setor_exists(setor.id):
+    if setores_repo.setor_exists(setor.id):
         raise HTTPException(status_code=400, detail="Setor already exists")
-    # Validate that departamento_id exists
-    if not departamentos_db.departamento_exists(setor.departamento_id):
+    if not departamentos_repo.departamento_exists(setor.departamento_id):
         raise HTTPException(status_code=400, detail="Departamento not found")
-    setores_db.add_setor(setor.id, setor.dict())
+    setores_repo.add_setor(setor.id, setor.dict())
     return {"message": "Setor created successfully"}
 
 @app.put("/setores/{setor_id}")
 async def update_setor(setor_id: str, setor: Setor, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not setores_db.setor_exists(setor_id):
+    if not setores_repo.setor_exists(setor_id):
         raise HTTPException(status_code=404, detail="Setor not found")
-    setores_db.add_setor(setor_id, setor.dict())
+    setores_repo.add_setor(setor_id, setor.dict())
     return {"message": "Setor updated successfully"}
 
 @app.delete("/setores/{setor_id}")
 async def delete_setor(setor_id: str, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not setores_db.setor_exists(setor_id):
+    if not setores_repo.setor_exists(setor_id):
         raise HTTPException(status_code=404, detail="Setor not found")
-    setores_db.delete_setor(setor_id)
+    setores_repo.delete_setor(setor_id)
     return {"message": "Setor deleted successfully"}
 
 # Departamento CRUD endpoints
 @app.get("/departamentos")
 async def get_departamentos():
-    return {"departamentos": departamentos_db.get_all_departamentos()}
+    return {"departamentos": departamentos_repo.get_all_departamentos()}
 
 @app.post("/departamentos")
 async def create_departamento(departamento: Departamento, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if departamentos_db.departamento_exists(departamento.id):
+    if departamentos_repo.departamento_exists(departamento.id):
         raise HTTPException(status_code=400, detail="Departamento already exists")
-    # Validate that filial_id exists
-    if not filiais_db.filial_exists(departamento.filial_id):
+    if not filiais_repo.filial_exists(departamento.filial_id):
         raise HTTPException(status_code=400, detail="Filial not found")
-    departamentos_db.add_departamento(departamento.id, departamento.dict())
+    departamentos_repo.add_departamento(departamento.id, departamento.dict())
     return {"message": "Departamento created successfully"}
 
 @app.put("/departamentos/{dep_id}")
 async def update_departamento(dep_id: str, departamento: Departamento, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not departamentos_db.departamento_exists(dep_id):
+    if not departamentos_repo.departamento_exists(dep_id):
         raise HTTPException(status_code=404, detail="Departamento not found")
-    departamentos_db.add_departamento(dep_id, departamento.dict())
+    # Validate filial_id exists
+    if not filiais_repo.filial_exists(departamento.filial_id):
+        raise HTTPException(status_code=400, detail="Filial not found")
+    departamentos_repo.add_departamento(dep_id, departamento.dict())
     return {"message": "Departamento updated successfully"}
 
-@app.delete("/departamentos/{dep_id}")
-async def delete_departamento(dep_id: str, current_user: User = Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not departamentos_db.departamento_exists(dep_id):
-        raise HTTPException(status_code=404, detail="Departamento not found")
-    departamentos_db.delete_departamento(dep_id)
-    return {"message": "Departamento deleted successfully"}
 
 # Filial CRUD endpoints
 @app.get("/filiais")
 async def get_filiais():
-    return {"filiais": filiais_db.get_all_filiais()}
+    return {"filiais": filiais_repo.get_all_filiais()}
+
 
 @app.post("/filiais")
 async def create_filial(filial: Filial, current_user: User = Depends(get_current_user)):

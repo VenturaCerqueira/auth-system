@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, User, UserPlus, AlertCircle, CheckCircle } from 'lucide-react'
 import backgroundImage from '../fotos/background.png'
 import infologoImage from '../fotos/infologo.png'
+import API_URL from '@/lib/api'
 
 interface Setor {
   id: string
@@ -50,9 +51,9 @@ export default function Register() {
   const fetchOptions = async () => {
     try {
       const [setoresRes, departamentosRes, filiaisRes] = await Promise.all([
-        fetch('https://api-nine-ochre-18.vercel.app/setores'),
-        fetch('https://api-nine-ochre-18.vercel.app/departamentos'),
-        fetch('https://api-nine-ochre-18.vercel.app/filiais')
+        fetch(`${API_URL}/setores`),
+        fetch(`${API_URL}/departamentos`),
+        fetch(`${API_URL}/filiais`)
       ])
 
       if (setoresRes.ok) {
@@ -80,7 +81,7 @@ export default function Register() {
     setError('')
 
     try {
-      const response = await fetch('https://api-nine-ochre-18.vercel.app/register', {
+      const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
