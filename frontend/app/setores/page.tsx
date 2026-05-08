@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
 import Footer from '../components/Footer'
-import { Users, Edit, Trash2, Plus, AlertCircle, CheckCircle, Building, BarChart3, TrendingUp, Building2 } from 'lucide-react'
+import { Edit, Trash2, Plus, AlertCircle, CheckCircle, Building, BarChart3, TrendingUp } from 'lucide-react'
 
 interface Setor {
   id: string
@@ -37,6 +37,8 @@ interface User {
   filial_id?: string
 }
 
+const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
 export default function SetoresPage() {
   const [setores, setSetores] = useState<Setor[]>([])
   const [departamentos, setDepartamentos] = useState<Departamento[]>([])
@@ -51,7 +53,15 @@ export default function SetoresPage() {
 
   useEffect(() => {
     fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const authHeaders = () => {
+    const token = localStorage.getItem('token')
+    return {
+      Authorization: `Bearer ${token}`,
+    }
+  }
 
   const fetchData = async () => {
     const token = localStorage.getItem('token')
@@ -62,26 +72,10 @@ export default function SetoresPage() {
 
     try {
       const [setoresResponse, usersResponse, departamentosResponse, filiaisResponse] = await Promise.all([
-        fetch('https://api-nine-ochre-18.vercel.app/setores', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }),
-        fetch('https://api-nine-ochre-18.vercel.app/users', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }),
-        fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }),
-        fetch('https://api-nine-ochre-18.vercel.app/filiais', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }),
+        fetch(`${apiBase}/setores`, { headers: authHeaders() }),
+        fetch(`${apiBase}/users`, { headers: authHeaders() }),
+        fetch(`${apiBase}/departamentos`, { headers: authHeaders() }),
+        fetch(`${apiBase}/filiais`, { headers: authHeaders() }),
       ])
 
       if (setoresResponse.ok) {
@@ -108,7 +102,7 @@ export default function SetoresPage() {
         const filiaisData = await filiaisResponse.json()
         setFiliais(filiaisData.filiais)
       }
-    } catch (err) {
+    } catch {
       setError('Falha ao carregar dados')
     } finally {
       setLoading(false)
@@ -123,11 +117,7 @@ export default function SetoresPage() {
     }
 
     try {
-      const response = await fetch('https://api-nine-ochre-18.vercel.app/setores', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
+      const response = await fetch(`${apiBase}/setores`, { headers: authHeaders() })
 
       if (response.ok) {
         const data = await response.json()
@@ -138,7 +128,7 @@ export default function SetoresPage() {
         localStorage.removeItem('token')
         router.push('/login')
       }
-    } catch (err) {
+    } catch {
       setError('Falha ao carregar setores')
     } finally {
       setLoading(false)
@@ -151,10 +141,10 @@ export default function SetoresPage() {
     if (!token) return
 
     try {
-      const response = await fetch('https://api-nine-ochre-18.vercel.app/setores', {
+      const response = await fetch(`${apiBase}/setores`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          ...authHeaders(),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(newSetor),
@@ -165,10 +155,10 @@ export default function SetoresPage() {
         setNewSetor({ id: '', name: '', code: '', departamento_id: '' })
         fetchSetores()
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({}))
         setError(errorData.detail || 'Erro ao criar setor')
       }
-    } catch (err) {
+    } catch {
       setError('Erro de rede')
     }
   }
@@ -178,10 +168,10 @@ export default function SetoresPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`https://api-nine-ochre-18.vercel.app/setores/${setor.id}`, {
+      const response = await fetch(`${apiBase}/setores/${setor.id}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          ...authHeaders(),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(setor),
@@ -191,10 +181,10 @@ export default function SetoresPage() {
         setEditingSetor(null)
         fetchSetores()
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({}))
         setError(errorData.detail || 'Erro ao atualizar setor')
       }
-    } catch (err) {
+    } catch {
       setError('Erro de rede')
     }
   }
@@ -206,20 +196,18 @@ export default function SetoresPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`https://api-nine-ochre-18.vercel.app/setores/${setorId}`, {
+      const response = await fetch(`${apiBase}/setores/${setorId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: authHeaders(),
       })
 
       if (response.ok) {
         fetchSetores()
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({}))
         setError(errorData.detail || 'Erro ao excluir setor')
       }
-    } catch (err) {
+    } catch {
       setError('Erro de rede')
     }
   }
@@ -234,7 +222,7 @@ export default function SetoresPage() {
             <div className="flex items-center justify-center min-h-[50vh]">
               <div className="animate-pulse">
                 <div className="text-xl text-primary-text dark:text-dark-text mb-4">Carregando...</div>
-                <div className="w-16 h-16 border-4 border-primary-main dark:border-dark-main border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <div className="w-16 h-16 border-4 border-primary-main dark:border-dark-main border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
             </div>
           </main>
@@ -251,7 +239,6 @@ export default function SetoresPage() {
         <Sidebar />
         <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">
-            {/* Header Section with Gradient */}
             <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-blue-800 dark:via-blue-900 dark:to-indigo-900 rounded-2xl p-8 mb-8 shadow-2xl">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div className="flex items-center space-x-4">
@@ -273,7 +260,6 @@ export default function SetoresPage() {
               </div>
             </div>
 
-            {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow duration-200">
                 <div className="flex items-center justify-between">
@@ -303,7 +289,9 @@ export default function SetoresPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Usuários</p>
-                    <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{users.filter(user => user.setor_id).length}</p>
+                    <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                      {users.filter((user) => user.setor_id).length}
+                    </p>
                   </div>
                   <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
                     <BarChart3 size={24} className="text-indigo-600 dark:text-indigo-400" />
@@ -321,11 +309,14 @@ export default function SetoresPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {setores.map((setor) => (
-                <div key={setor.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div
+                  key={setor.id}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                        <Building className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        <Building size={20} className="text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{setor.name}</h3>
@@ -408,13 +399,12 @@ export default function SetoresPage() {
           </div>
         </main>
       </div>
+
       <Footer />
 
-      {/* Create Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-100">
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
@@ -435,109 +425,83 @@ export default function SetoresPage() {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
               <form onSubmit={handleCreateSetor} className="space-y-6">
-                {/* Setor Information Section */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
                     Informações do Setor
                   </h3>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* ID Field */}
                     <div>
                       <label htmlFor="newSetorId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         ID *
                       </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Building className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <input
-                          type="text"
-                          id="newSetorId"
-                          value={newSetor.id}
-                          onChange={(e) => setNewSetor({ ...newSetor, id: e.target.value })}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                          placeholder="Digite o ID do setor"
-                          required
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        id="newSetorId"
+                        value={newSetor.id}
+                        onChange={(e) => setNewSetor({ ...newSetor, id: e.target.value })}
+                        className="block w-full pl-3 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
+                        placeholder="Digite o ID do setor"
+                        required
+                      />
                     </div>
 
-                    {/* Code Field */}
                     <div>
                       <label htmlFor="newSetorCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Código *
                       </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Building className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <input
-                          type="text"
-                          id="newSetorCode"
-                          value={newSetor.code}
-                          onChange={(e) => setNewSetor({ ...newSetor, code: e.target.value })}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                          placeholder="Digite o código do setor"
-                          required
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        id="newSetorCode"
+                        value={newSetor.code}
+                        onChange={(e) => setNewSetor({ ...newSetor, code: e.target.value })}
+                        className="block w-full pl-3 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
+                        placeholder="Digite o código do setor"
+                        required
+                      />
                     </div>
 
-                    {/* Name Field */}
                     <div className="md:col-span-2">
                       <label htmlFor="newSetorName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Nome do Setor *
                       </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Building className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <input
-                          type="text"
-                          id="newSetorName"
-                          value={newSetor.name}
-                          onChange={(e) => setNewSetor({ ...newSetor, name: e.target.value })}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                          placeholder="Digite o nome do setor"
-                          required
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        id="newSetorName"
+                        value={newSetor.name}
+                        onChange={(e) => setNewSetor({ ...newSetor, name: e.target.value })}
+                        className="block w-full pl-3 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
+                        placeholder="Digite o nome do setor"
+                        required
+                      />
                     </div>
 
-                    {/* Departamento Field */}
                     <div className="md:col-span-2">
                       <label htmlFor="newSetorDepartamento" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Departamento *
                       </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Building className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <select
-                          id="newSetorDepartamento"
-                          value={newSetor.departamento_id}
-                          onChange={(e) => setNewSetor({ ...newSetor, departamento_id: e.target.value })}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
-                          required
-                        >
-                          <option value="">Selecione um departamento</option>
-                          {departamentos.map((departamento) => (
-                            <option key={departamento.id} value={departamento.id}>
-                              {departamento.name} ({departamento.code})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <select
+                        id="newSetorDepartamento"
+                        value={newSetor.departamento_id}
+                        onChange={(e) => setNewSetor({ ...newSetor, departamento_id: e.target.value })}
+                        className="block w-full pl-3 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
+                        required
+                      >
+                        <option value="">Selecione um departamento</option>
+                        {departamentos.map((departamento) => (
+                          <option key={departamento.id} value={departamento.id}>
+                            {departamento.name} ({departamento.code})
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
               </form>
             </div>
 
-            {/* Modal Footer */}
             <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <button
                 onClick={() => {
@@ -549,7 +513,7 @@ export default function SetoresPage() {
                 Cancelar
               </button>
               <button
-                onClick={handleCreateSetor}
+                onClick={handleCreateSetor as any}
                 className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center space-x-2"
               >
                 <Plus className="h-5 w-5" />
@@ -562,3 +526,4 @@ export default function SetoresPage() {
     </div>
   )
 }
+

@@ -43,12 +43,12 @@ export default function DepartamentosPage() {
 
     try {
       const [departamentosResponse, filiaisResponse] = await Promise.all([
-        fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/departamentos`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         }),
-        fetch('https://api-nine-ochre-18.vercel.app/filiais', {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/filiais`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -81,7 +81,7 @@ export default function DepartamentosPage() {
     if (!token) return
 
     try {
-      const response = await fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/departamentos`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -102,7 +102,7 @@ export default function DepartamentosPage() {
     if (!token) return
 
     try {
-      const response = await fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/departamentos`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -129,7 +129,7 @@ export default function DepartamentosPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`https://api-nine-ochre-18.vercel.app/departamentos/${departamento.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/departamentos/${departamento.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -157,7 +157,7 @@ export default function DepartamentosPage() {
     if (!token) return
 
     try {
-      const response = await fetch(`https://api-nine-ochre-18.vercel.app/departamentos/${departamentoId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/departamentos/${departamentoId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

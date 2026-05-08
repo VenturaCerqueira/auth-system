@@ -15,7 +15,19 @@ export default function Login() {
   const [error, setError] = useState('')
   const router = useRouter()
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-700 dark:text-gray-200">Carregando sistema...</p>
+        </div>
+      </div>
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault()
     setLoading(true)
     setError('')
