@@ -21,7 +21,8 @@ export default function Login() {
     setError('')
 
     try {
-      const response = await fetch('https://api-nine-ochre-18.vercel.app/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api-nine-ochre-18.vercel.app'}/login`, {
+
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

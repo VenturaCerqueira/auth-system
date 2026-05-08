@@ -68,6 +68,9 @@ export default function UsersPage() {
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('token')
+
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-nine-ochre-18.vercel.app'
+      const api = (path: string) => `${API_BASE_URL}${path}`
       if (!token) {
         router.push('/login')
         return
@@ -75,27 +78,27 @@ export default function UsersPage() {
 
       try {
         const [usersResponse, permissionsResponse, setoresResponse, departamentosResponse, filiaisResponse] = await Promise.all([
-          fetch('https://api-nine-ochre-18.vercel.app/users', {
+          fetch(api('/users'), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('https://api-nine-ochre-18.vercel.app/permissions', {
+          fetch(api('/permissions'), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('https://api-nine-ochre-18.vercel.app/setores', {
+          fetch(api('/setores'), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('https://api-nine-ochre-18.vercel.app/departamentos', {
+          fetch(api('/departamentos'), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('https://api-nine-ochre-18.vercel.app/filiais', {
+          fetch(api('/filiais'), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },

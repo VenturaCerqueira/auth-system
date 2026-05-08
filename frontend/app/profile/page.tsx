@@ -38,13 +38,14 @@ export default function ProfilePage() {
       }
 
       try {
+        const { API_URL } = await import('../../lib/api')
         const [userResponse, permissionsResponse] = await Promise.all([
-          fetch('https://api-nine-ochre-18.vercel.app/users/me', {
+          fetch(`${API_URL}/users/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           }),
-          fetch('https://api-nine-ochre-18.vercel.app/permissions', {
+          fetch(`${API_URL}/permissions`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -79,7 +80,8 @@ export default function ProfilePage() {
     if (!token) return
 
     try {
-      const response = await fetch('https://api-nine-ochre-18.vercel.app/users/me', {
+      const { API_URL } = await import('../../lib/api')
+      const response = await fetch(`${API_URL}/users/me`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

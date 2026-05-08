@@ -646,28 +646,31 @@ async def get_filiais():
 async def create_filial(filial: Filial, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if filiais_db.filial_exists(filial.id):
+    if filiais_repo.filial_exists(filial.id):
         raise HTTPException(status_code=400, detail="Filial already exists")
-    filiais_db.add_filial(filial.id, filial.dict())
+    filiais_repo.add_filial(filial.id, filial.dict())
     return {"message": "Filial created successfully"}
+
 
 @app.put("/filiais/{filial_id}")
 async def update_filial(filial_id: str, filial: Filial, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not filiais_db.filial_exists(filial_id):
+    if not filiais_repo.filial_exists(filial_id):
         raise HTTPException(status_code=404, detail="Filial not found")
-    filiais_db.add_filial(filial_id, filial.dict())
+    filiais_repo.update_filial(filial_id, filial.dict())
     return {"message": "Filial updated successfully"}
+
 
 @app.delete("/filiais/{filial_id}")
 async def delete_filial(filial_id: str, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not filiais_db.filial_exists(filial_id):
+    if not filiais_repo.filial_exists(filial_id):
         raise HTTPException(status_code=404, detail="Filial not found")
-    filiais_db.delete_filial(filial_id)
+    filiais_repo.delete_filial(filial_id)
     return {"message": "Filial deleted successfully"}
+
 
 @app.get("/location")
 async def get_location():
